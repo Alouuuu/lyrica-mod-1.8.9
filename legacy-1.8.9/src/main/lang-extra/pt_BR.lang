@@ -1,0 +1,6 @@
+key.categories.lyrica=Lyrica
+key.lyrica.settings=Abrir configurações do Lyrica
+key.lyrica.toggle=Mostrar/ocultar letras
+config.relaylyrics.world_terrain_light.desc=Palavras cantadas iluminam o cenário ao redor. No 1.8.9 a luz é embutida no Lyrica (não precisa de outro mod).
+config.relaylyrics.world_light_status.ready=Luz embutida do Lyrica (1.8.9) ativa
+config.relaylyrics.world_light_status.missing=Luz do cenário indisponível

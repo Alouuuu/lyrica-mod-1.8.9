@@ -1,0 +1,16 @@
+[
+  {
+    "modid": "${modid}",
+    "name": "Lyrica",
+    "description": "Port 1.8.9 - Synced lyrics for Spotify, YouTube Music, Apple Music and other players (unofficial port).",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "https://github.com/Alouuuu/lyrica-mod-1.8.9",
+    "updateUrl": "",
+    "authorList": ["Fakiz", "Alou_"],
+    "credits": "Original Fabric mod by Fakiz (AGPL-3.0). 1.8.9 port by Alou_. Inspired by Spicy Lyrics.",
+    "logoFile": "",
+    "screenshots": [],
+    "dependencies": []
+  }
+]

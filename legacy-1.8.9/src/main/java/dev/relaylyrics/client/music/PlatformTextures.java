@@ -1,0 +1,137 @@
+package dev.relaylyrics.client.music;
+
+import dev.relaylyrics.platform.mc.RenderSystem;
+import dev.relaylyrics.platform.mc.MinecraftClient;
+import dev.relaylyrics.platform.mc.DrawContext;
+import dev.relaylyrics.platform.mc.NativeImage;
+import dev.relaylyrics.platform.mc.NativeImageBackedTexture;
+import dev.relaylyrics.platform.mc.Identifier;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
+
+/** Minecraft 1.21.1 dynamic-texture and GUI drawing adapter. */
+public final class PlatformTextures {
+    private static double renderScale = 1;
+    public static double renderScale() { return renderScale; }
+    public static double beginUiScale(double value) { double old = renderScale; renderScale *= value; return old; }
+    public static void endUiScale(double previous) { renderScale = previous; }
+
+    private PlatformTextures() { }
+
+    static NativeImageBackedTexture fromImage(String name, NativeImage image) {
+        return new NativeImageBackedTexture(image);
+    }
+
+    public static NativeImageBackedTexture empty(String name, int width, int height) {
+        NativeImageBackedTexture texture = new NativeImageBackedTexture(width, height, false);
+        texture.setFilter(true, false);
+        return texture;
+    }
+
+    /** Physical pixels represented by one logical GUI pixel. */
+    public static double guiScale() {
+        return Math.max(.05, MinecraftClient.getInstance().getWindow().getScaleFactor() * renderScale);
+    }
+
+    public static boolean supportsRoundedCoverComposite() { return true; }
+
+    public static Identifier register(String name, NativeImageBackedTexture texture) {
+        return MinecraftClient.getInstance().getTextureManager().registerDynamicTexture(name, texture);
+    }
+
+    public static Identifier registerEffectMask(String name, LyricsEffectRaster.Mask mask) {
+        NativeImageBackedTexture texture = empty(name, mask.width(), mask.height());
+        NativeImage image = texture.getImage();
+        for (int y = 0; y < mask.height(); y++) for (int x = 0; x < mask.width(); x++)
+            setColorArgb(image, x, y, (mask.alpha()[y * mask.width() + x] & 255) << 24 | 0xFFFFFF);
+        texture.upload();
+        // NativeImage.upload resets the 1.21.1 GL filters; restore them afterwards.
+        texture.setFilter(true, false);
+        texture.bindTexture();
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL12.GL_CLAMP_TO_EDGE);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL12.GL_CLAMP_TO_EDGE);
+        return register(name, texture);
+    }
+
+    public static void upload(NativeImageBackedTexture texture) {
+        texture.upload();
+        texture.setFilter(true, false);
+    }
+
+    public static void retireEffectMask(Identifier id) {
+        MinecraftClient.getInstance().getTextureManager().destroyTexture(id);
+    }
+
+    public static Identifier registerUiMask(String name, int width, int height, byte[] alpha) {
+        if (width <= 0 || height <= 0 || width > 4096 || height > 1024 || (long) width * height != alpha.length)
+            throw new IllegalArgumentException("Invalid UI text raster");
+        NativeImageBackedTexture texture = empty(name, width, height);
+        NativeImage image = texture.getImage();
+        for (int y = 0; y < height; y++) for (int x = 0; x < width; x++)
+            setColorArgb(image, x, y, (alpha[y * width + x] & 255) << 24 | 0xFFFFFF);
+        upload(texture);
+        return register(name, texture);
+    }
+
+    public static void releaseEffectMask(Identifier id) {
+        MinecraftClient.getInstance().getTextureManager().destroyTexture(id);
+    }
+
+    static void flush(DrawContext context) {
+        context.draw();
+    }
+
+    public static void draw(DrawContext context, Identifier id, int x, int y, int width, int height,
+                            int cropX, int cropY, int cropWidth, int cropHeight,
+                            int sourceWidth, int sourceHeight, double opacity, double brightness) {
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        float light = (float) Math.clamp(brightness, 0, 1);
+        try {
+            RenderSystem.setShaderColor(light, light, light, (float) Math.clamp(opacity, 0, 1));
+            context.drawTexture(id, x, y, width, height, cropX, cropY,
+                    cropWidth, cropHeight, sourceWidth, sourceHeight);
+        } finally {
+            // Iris/Sodium and ImmediatelyFast all assume GUI code returns neutral tint/blend state.
+            RenderSystem.setShaderColor(1, 1, 1, 1);
+            RenderSystem.defaultBlendFunc();
+        }
+    }
+
+    public static void drawTinted(DrawContext context, Identifier id, int x, int y, int width, int height,
+                                  int cropX, int cropY, int cropWidth, int cropHeight,
+                                  int sourceWidth, int sourceHeight, int color) {
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        float alpha = (color >>> 24) / 255F;
+        float red = (color >>> 16 & 255) / 255F;
+        float green = (color >>> 8 & 255) / 255F;
+        float blue = (color & 255) / 255F;
+        try {
+            RenderSystem.setShaderColor(red, green, blue, alpha);
+            context.drawTexture(id, x, y, width, height, cropX, cropY,
+                    cropWidth, cropHeight, sourceWidth, sourceHeight);
+        } finally {
+            RenderSystem.setShaderColor(1, 1, 1, 1);
+            RenderSystem.defaultBlendFunc();
+        }
+    }
+
+    static int colorArgb(NativeImage image, int x, int y) {
+        int a = Byte.toUnsignedInt(image.getOpacity(x, y));
+        int r = Byte.toUnsignedInt(image.getRed(x, y));
+        int g = Byte.toUnsignedInt(image.getGreen(x, y));
+        int b = Byte.toUnsignedInt(image.getBlue(x, y));
+        return a << 24 | r << 16 | g << 8 | b;
+    }
+
+    public static void setUiPixel(NativeImage image, int x, int y, int argb) { setColorArgb(image, x, y, argb); }
+
+    static void setColorArgb(NativeImage image, int x, int y, int argb) {
+        int a = argb >>> 24;
+        int r = argb >>> 16 & 255;
+        int g = argb >>> 8 & 255;
+        int b = argb & 255;
+        image.setColor(x, y, a << 24 | b << 16 | g << 8 | r);
+    }
+}

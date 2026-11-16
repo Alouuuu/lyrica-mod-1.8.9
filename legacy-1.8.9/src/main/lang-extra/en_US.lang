@@ -1,0 +1,6 @@
+key.categories.lyrica=Lyrica
+key.lyrica.settings=Open Lyrica settings
+key.lyrica.toggle=Show/hide lyrics
+config.relaylyrics.world_terrain_light.desc=Sung words light up the surrounding terrain. On 1.8.9 the light is built into Lyrica (no extra mod needed).
+config.relaylyrics.world_light_status.ready=Lyrica built-in light (1.8.9) active
+config.relaylyrics.world_light_status.missing=Terrain light unavailable
