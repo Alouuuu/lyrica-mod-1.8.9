@@ -1,18 +1,18 @@
-# Lyrica - Minecraft Music & Synced Lyrics Mod
+# Lyrica 1.8.9 - Minecraft Music & Synced Lyrics Mod
 
-Lyrica is a Fabric Minecraft mod that displays real-time synchronized lyrics from Spotify, YouTube Music, Apple Music, and more. Enjoy customizable 2D and 3D lyrics, playback controls, and multiplayer karaoke.
+Lyrica 1.8.9 is an unofficial port of [Lyrica](https://github.com/fakemaluco/lyrica-mod) to Minecraft 1.8.9 with Forge. It displays real-time synchronized lyrics from Spotify, YouTube Music, Apple Music, and more. Enjoy customizable 2D and 3D lyrics and playback controls.
 
 ![Lyrica banner](https://i.postimg.cc/ryYtqpRn/lyricabanner.png)
 
-[![Latest release](https://img.shields.io/github/v/release/fakemaluco/lyrica-mod?label=release)](https://github.com/fakemaluco/lyrica-mod/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/Alouuuu/lyrica-mod-1.8.9?label=release)](https://github.com/Alouuuu/lyrica-mod-1.8.9/releases/latest)
 
 **Music, playback controls, and synchronized lyrics inside Minecraft.**
 
-[Download](#download) · [Features](#features) · [Multiplayer](#multiplayer) · [Privacy](#privacy) · [Documentation](#documentation)
+[Download](#download) · [Features](#features) · [Differences from Lyrica](#differences-from-lyrica) · [Privacy](#privacy) · [Documentation](#documentation)
 
-## New in 0.9.4
+## New in 0.9.4-1.8.9
 
-Lyrica now supports Minecraft 26.3. The karaoke panel can open the Spotify host’s playback queue, and world lyrics now have a minimum and maximum placement distance. The sung-text gradient spans the whole phrase by default. See the [0.9.4 release notes](docs/releases/0.9.4.md).
+The first release of the 1.8.9 port, based on Lyrica 0.9.4. It brings the HUD lyrics, the in-game player, world lyrics, translation, and romanization to Forge 1.8.9, and checks this fork’s releases for updates. See the [0.9.4-1.8.9 release notes](legacy-1.8.9/docs/releases/0.9.4-1.8.9.md).
 
 ## Features
 
@@ -40,38 +40,37 @@ Follow synchronized lyrics in the world, in the on-screen panel, or in the compa
 
 ![Customization preview](https://i.postimg.cc/T1Y7gJV2/Customization-animado.gif)
 
-Choose fonts, adjust the layout, and change where lyrics appear. Lyrica supports multiple lyrics sources, romanization, and animated artwork or Canvas video when available.
+Choose fonts, adjust the layout, and change where lyrics appear. Lyrica supports multiple lyrics sources, translation, romanization, and Google Fonts. Press **L** to open the settings; you can change the key in **Controls**.
 
 ![Lyrica appearance settings](https://i.postimg.cc/t40wJfSy/Appearance-original-restaurado.png)
 
-## Multiplayer
+## Differences from Lyrica
 
-![Listening together preview](https://i.postimg.cc/tRwmvwHP/listenwithothers-animado.webp)
+The 1.8.9 port runs on Minecraft 1.8.9 and Java 8, so some features of the Fabric versions are not available yet:
 
-**Music Presence** shows what other Lyrica players are listening to when they share their music. Manage sharing in the connection settings or use `/music sharing off`.
+- Music Presence and the multiplayer karaoke, including the `/music` and `/karaoke` commands.
+- Animated artwork and Canvas video. Lyrica shows the static cover instead.
+- The Jade integration.
 
-With Lyrica installed on the server and clients, use **`/karaoke pop-up`** to place a shared player in the world. Guests accept on the panel before receiving the host’s playback and lyrics. The host can move or resize it, and connected Spotify guests can sync their local playback. The session follows the host’s next songs until it is closed.
+WebP and AVIF covers are requested as JPEG or PNG instead. Terrain lighting from world lyrics is off by default, because it rebuilds chunks. Report problems with the port in [this repository](https://github.com/Alouuuu/lyrica-mod-1.8.9), not in the original Lyrica.
 
 ## Download
 
-1. Install [Fabric Loader](https://fabricmc.net/use/installer/) and [Fabric API](https://modrinth.com/mod/fabric-api) for your Minecraft version.
-2. Get the matching Lyrica JAR from [GitHub Releases](https://github.com/fakemaluco/lyrica-mod/releases/latest).
+1. Install [Forge](https://files.minecraftforge.net/net/minecraftforge/forge/index_1.8.9.html) 11.15.1.2318 for Minecraft 1.8.9.
+2. Get the Lyrica JAR from [GitHub Releases](https://github.com/Alouuuu/lyrica-mod-1.8.9/releases/latest).
 3. Place the JAR in your instance’s `mods` folder and launch Minecraft.
 
-| Minecraft | Java | JAR prefix |
-| --- | --- | --- |
-| 1.21.1 | 21 | `lyrica-1.21.1-` |
-| 1.21.11 | 21 | `lyrica-1.21.11-` |
-| 26.2 | 25 | `lyrica-26.2-` |
-| 26.3 | 25 | `lyrica-26.3-` |
+| Minecraft | Forge | Java | JAR suffix |
+| --- | --- | --- | --- |
+| 1.8.9 | 11.15.1.2318 | 8 | `-1.8.9.jar` |
 
-The release JARs include the native Windows x64 media bridge.
+The release JAR includes the native Windows x64 media bridge. For the Fabric versions (1.21.1, 1.21.11, 26.2, and 26.3), use the [original Lyrica](https://github.com/fakemaluco/lyrica-mod/releases/latest).
 
 ## Privacy
 
 Enabled online lyrics providers receive track information such as title and artist to look up lyrics. You can manage those providers in **Sources**. Spotify account access and Gemini experiments are optional.
 
-Music Presence shares track metadata when sharing is enabled. With Lyrica on the server, the Minecraft server relays that information. On other servers, the optional verified sharing path uses Supabase. A karaoke room sends track details, playback position, and timed lyrics to guests who accept the invitation.
+The port does not share your music with other players. When update checks are on, Lyrica asks this fork’s GitHub Releases whether a newer version exists.
 
 See [Privacy and data controls](docs/PRIVACY.md) for settings and details.
 
@@ -79,7 +78,8 @@ See [Privacy and data controls](docs/PRIVACY.md) for settings and details.
 
 - [User guide in Portuguese](docs/GUIDE.md)
 - [Cinematic world lyrics](docs/cinematic-lyrics.md)
-- [Project structure and build instructions](docs/DEVELOPMENT.md)
+- [Project structure and build instructions](docs/DEVELOPMENT.md) for the Fabric versions
+- Building the 1.8.9 port: run `gradlew build` in `legacy-1.8.9/` with JDKs 8, 17, and 21 installed. The JAR is written to `legacy-1.8.9/build/libs/`.
 - [License](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md)
 
-Created by **Fakiz**. Inspired by [Spicy Lyrics](https://github.com/Spikerko/spicy-lyrics).
+Created by **Fakiz**. 1.8.9 port by **Alou_**. Inspired by [Spicy Lyrics](https://github.com/Spikerko/spicy-lyrics).
