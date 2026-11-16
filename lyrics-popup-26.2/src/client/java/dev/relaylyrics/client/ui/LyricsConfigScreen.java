@@ -427,6 +427,23 @@ public final class LyricsConfigScreen extends FanDroidScreenBase implements Lyri
         }
     }
     private int maxScroll() { return Math.max(0, totalHeight - (listBottom - listTop)); }
+    // Scrollbar drag (ported from the 1.8.9 port): the bar used to be a wheel-only indicator.
+    private boolean scrollbarDragging;
+    private double scrollbarGrab;
+    private int scrollbarThumb() { int track = listBottom - listTop; return Math.max(18, track * track / Math.max(1, totalHeight)); }
+    private int scrollbarThumbY() {
+        int track = listBottom - listTop, max = maxScroll();
+        return listTop + (max == 0 ? 0 : (track - scrollbarThumb()) * scroll / max);
+    }
+    private boolean overScrollbar(double x, double y) {
+        int barX = rowLeft + rowWidth + 7;
+        return maxScroll() > 0 && x >= barX - 4 && x <= barX + 8 && y >= listTop && y <= listBottom;
+    }
+    private void dragScrollbarTo(double y) {
+        int range = Math.max(1, (listBottom - listTop) - scrollbarThumb());
+        scroll = (int) Math.round(Math.clamp((y - scrollbarGrab - listTop) / range, 0, 1) * maxScroll());
+        positionRows();
+    }
     private void changeCategory(Category next) {
         category = next; searchQuery = ""; scroll = 0; expandedChoice = "";
         if (!notice.isEmpty()) { notice = ""; listBottom = modalY + modalHeight - 20; }
@@ -1107,9 +1124,10 @@ public final class LyricsConfigScreen extends FanDroidScreenBase implements Lyri
         context.disableScissor();
         paintAlpha = modalAlpha;
         if (maxScroll() > 0) {
-            int track = listBottom - listTop, thumb = Math.max(18, track * track / totalHeight);
-            int y = listTop + (track - thumb) * scroll / maxScroll();
-            RoundedGui.smoothFill(context, rowLeft + rowWidth + 7, y, 3, thumb, 1, ink(0x60D9CAFF));
+            int thumb = scrollbarThumb(), y = scrollbarThumbY();
+            boolean hot = scrollbarDragging || overScrollbar(mouseX, mouseY);
+            RoundedGui.smoothFill(context, rowLeft + rowWidth + (hot ? 6 : 7), y, hot ? 5 : 3, thumb, hot ? 2 : 1,
+                    ink(hot ? 0xA0D9CAFF : 0x60D9CAFF));
         }
         if (!notice.isEmpty()) {
             GuiTransform.enableScissor(context, rowLeft, listBottom + 5, modalX + modalWidth - 15, modalY + modalHeight - 6);
@@ -1258,6 +1276,15 @@ public final class LyricsConfigScreen extends FanDroidScreenBase implements Lyri
         return false;
     }
     @Override protected boolean handleMouseClicked(double x, double y, int button) {
+        if (button == InputConstants.MOUSE_BUTTON_LEFT && colorEntry == null && !editing && overScrollbar(x, y)) {
+            int thumbY = scrollbarThumbY(), thumb = scrollbarThumb();
+            // On the thumb keep the grab point; on the track centre the thumb under the cursor.
+            scrollbarGrab = y >= thumbY && y <= thumbY + thumb ? y - thumbY : thumb / 2.0;
+            scrollbarDragging = true;
+            setFocused(null);
+            dragScrollbarTo(y);
+            return true;
+        }
         if (colorEntry != null && button == InputConstants.MOUSE_BUTTON_LEFT) {
             if (x < modalX || x >= modalX + modalWidth || y < modalY || y >= modalY + modalHeight) {
                 closeColorEditor(false);
@@ -1333,6 +1360,7 @@ public final class LyricsConfigScreen extends FanDroidScreenBase implements Lyri
         dragging = !resizing; dragX = (int) x; dragY = (int) y; return true;
     }
     @Override protected boolean handleMouseDragged(double x, double y, int button, double dx, double dy) {
+        if (scrollbarDragging && button == InputConstants.MOUSE_BUTTON_LEFT) { dragScrollbarTo(y); return true; }
         if (draggedRange != null && button == InputConstants.MOUSE_BUTTON_LEFT) {
             draggedRange.moveTo(x);
             return true;
@@ -1387,6 +1415,7 @@ public final class LyricsConfigScreen extends FanDroidScreenBase implements Lyri
         preferences.setPopupHeight(popupSizeProfile(), editHeight); saveDelay = 10;
     }
     @Override protected boolean handleMouseReleased(double x, double y, int button) {
+        if (scrollbarDragging && button == InputConstants.MOUSE_BUTTON_LEFT) { scrollbarDragging = false; return true; }
         if (draggedRange != null && button == InputConstants.MOUSE_BUTTON_LEFT) {
             draggedRange = null;
             if (saveDelay > 0) { savePreferences(); saveDelay = 0; }
